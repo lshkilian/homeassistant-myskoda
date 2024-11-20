@@ -18,14 +18,13 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.typing import (
-    DiscoveryInfoType,  # pyright: ignore [reportAttributeAccessIssue]
-)
+from homeassistant.helpers.typing import DiscoveryInfoType  # pyright: ignore [reportAttributeAccessIssue]
 
 from myskoda.models import charging
 from myskoda.models.charging import Charging, ChargingStatus
-from myskoda.models.driving_range import EngineType
+from myskoda.models.health import WarningLightCategory
 from myskoda.models.info import CapabilityId
+from myskoda.models.driving_range import EngineType
 
 from .const import COORDINATORS, DOMAIN
 from .entity import MySkodaEntity
@@ -33,10 +32,10 @@ from .utils import add_supported_entities
 
 
 async def async_setup_entry(
-    hass: HomeAssistant,
-    config: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
-    _discovery_info: DiscoveryInfoType | None = None,
+        hass: HomeAssistant,
+        config: ConfigEntry,
+        async_add_entities: AddEntitiesCallback,
+        _discovery_info: DiscoveryInfoType | None = None,
 ) -> None:
     """Set up the sensor platform."""
     add_supported_entities(
@@ -48,6 +47,13 @@ async def async_setup_entry(
             ChargingState,
             LastUpdated,
             Mileage,
+            WarningLightAssistance,
+            WarningLightComfort,
+            WarningLightBrake,
+            WarningLightEngine,
+            WarningLightLighting,
+            WarningLightTire,
+            WarningLightOther,
             RemainingChargingTime,
             Range,
             SoftwareVersion,
@@ -66,14 +72,7 @@ async def async_setup_entry(
 
 
 class MySkodaSensor(MySkodaEntity, SensorEntity):
-    def _charging(self) -> Charging | None:
-        if charging := self.vehicle.charging:
-            return charging
-
-    def _status(self) -> ChargingStatus | None:
-        if charging := self._charging():
-            if status := charging.status:
-                return status
+    pass
 
 
 class SoftwareVersion(MySkodaSensor):
@@ -93,6 +92,15 @@ class SoftwareVersion(MySkodaSensor):
 
 
 class ChargingSensor(MySkodaSensor):
+    def _charging(self) -> Charging | None:
+        if charging := self.vehicle.charging:
+            return charging
+
+    def _status(self) -> ChargingStatus | None:
+        if charging := self._charging():
+            if status := charging.status:
+                return status
+
     def required_capabilities(self) -> list[CapabilityId]:
         return [CapabilityId.CHARGING]
 
@@ -245,23 +253,13 @@ class Range(MySkodaSensor):
         translation_key="range",
     )
 
-    def is_supported(self) -> bool:
-        status = self._status()
-        driving_range = self.vehicle.driving_range
-        return any(
-            [
-                driving_range and driving_range.total_range_in_km,
-                status and status.battery.remaining_cruising_range_in_meters,
-            ]
-        )
-
     @property
     def icon(self) -> str:  # noqa: D102
         if (
-            self.vehicle.driving_range is None
-            or self.vehicle.driving_range.car_type is None
+                self.vehicle.driving_range is None
+                or self.vehicle.driving_range.car_type is None
         ):
-            return "mdi:ev-station"
+            return "mdi:gas-station"
         else:
             if self.vehicle.driving_range.car_type == EngineType.ELECTRIC:
                 return "mdi:ev-station"
@@ -273,10 +271,8 @@ class Range(MySkodaSensor):
         if range := self.vehicle.driving_range:
             return range.total_range_in_km
 
-        # Fall back to getting range from battery
-        if status := self._status():
-            if status.battery.remaining_cruising_range_in_meters is not None:
-                return status.battery.remaining_cruising_range_in_meters / 1000
+    def required_capabilities(self) -> list[CapabilityId]:
+        return [CapabilityId.STATE]
 
 
 class TargetBatteryPercentage(ChargingSensor):
@@ -298,6 +294,136 @@ class TargetBatteryPercentage(ChargingSensor):
     def forbidden_capabilities(self) -> list[CapabilityId]:
         return [CapabilityId.CHARGING_MQB]
 
+class WarningLightAssistance(MySkodaSensor):
+    category: WarningLightCategory = WarningLightCategory.ASSISTANCE
+    entity_description = SensorEntityDescription(
+        key=f"warning_light_{category.lower()}",
+        name=f"Warning Light: {category.replace('_', ' ').capitalize()}",
+        icon="mdi:alert-circle-outline",
+    )
+    @property
+    def native_value(self)-> str | None:  #
+        if health := self.vehicle.health:
+            for light in health.warning_lights:
+                if light.category == self.category:
+                    return ",".join(light.defects)
+        return ""
+
+    def required_capabilities(self) -> list[CapabilityId]:
+        return [CapabilityId.VEHICLE_HEALTH_WARNINGS]
+
+class WarningLightComfort(MySkodaSensor):
+    category: WarningLightCategory = WarningLightCategory.COMFORT
+    entity_description = SensorEntityDescription(
+        key=f"warning_light_{category.lower()}",
+        name=f"Warning Light: {category.replace('_', ' ').capitalize()}",
+        icon="mdi:alert-circle-outline",
+    )
+    @property
+    def native_value(self)-> str | None:  #
+        if health := self.vehicle.health:
+            for light in health.warning_lights:
+                if light.category == self.category:
+                    return ",".join(light.defects)
+        return ""
+
+    def required_capabilities(self) -> list[CapabilityId]:
+        return [CapabilityId.VEHICLE_HEALTH_WARNINGS]
+
+
+class WarningLightBrake(MySkodaSensor):
+    category: WarningLightCategory = WarningLightCategory.BRAKE
+    entity_description = SensorEntityDescription(
+        key=f"warning_light_{category.lower()}",
+        name=f"Warning Light: {category.replace('_', ' ').capitalize()}",
+        icon="mdi:alert-circle-outline",
+    )
+    @property
+    def native_value(self)-> str | None:  #
+        if health := self.vehicle.health:
+            for light in health.warning_lights:
+                if light.category == self.category:
+                    return ",".join(light.defects)
+        return ""
+
+    def required_capabilities(self) -> list[CapabilityId]:
+        return [CapabilityId.VEHICLE_HEALTH_WARNINGS]
+
+
+class WarningLightEngine(MySkodaSensor):
+    category: WarningLightCategory = WarningLightCategory.ENGINE
+    entity_description = SensorEntityDescription(
+        key=f"warning_light_{category.lower()}",
+        name=f"Warning Light: {category.replace('_', ' ').capitalize()}",
+        icon="mdi:alert-circle-outline",
+    )
+    @property
+    def native_value(self)-> str | None:  #
+        if health := self.vehicle.health:
+            for light in health.warning_lights:
+                if light.category == self.category:
+                    return ",".join(light.defects)
+        return ""
+
+    def required_capabilities(self) -> list[CapabilityId]:
+        return [CapabilityId.VEHICLE_HEALTH_WARNINGS]
+
+
+class WarningLightLighting(MySkodaSensor):
+    category: WarningLightCategory = WarningLightCategory.LIGHTING
+    entity_description = SensorEntityDescription(
+        key=f"warning_light_{category.lower()}",
+        name=f"Warning Light: {category.replace('_', ' ').capitalize()}",
+        icon="mdi:alert-circle-outline",
+    )
+    @property
+    def native_value(self)-> str | None:  #
+        if health := self.vehicle.health:
+            for light in health.warning_lights:
+                if light.category == self.category:
+                    return ",".join(light.defects)
+        return ""
+
+    def required_capabilities(self) -> list[CapabilityId]:
+        return [CapabilityId.VEHICLE_HEALTH_WARNINGS]
+
+
+class WarningLightTire(MySkodaSensor):
+    category: WarningLightCategory = WarningLightCategory.TIRE
+    entity_description = SensorEntityDescription(
+        key=f"warning_light_{category.lower()}",
+        name=f"Warning Light: {category.replace('_', ' ').capitalize()}",
+        icon="mdi:alert-circle-outline",
+    )
+    @property
+    def native_value(self)-> str | None:  #
+        if health := self.vehicle.health:
+            for light in health.warning_lights:
+                if light.category == self.category:
+                    return ",".join(light.defects)
+        return ""
+
+    def required_capabilities(self) -> list[CapabilityId]:
+        return [CapabilityId.VEHICLE_HEALTH_WARNINGS]
+
+
+class WarningLightOther(MySkodaSensor):
+    category: WarningLightCategory = WarningLightCategory.OTHER
+    entity_description = SensorEntityDescription(
+        key=f"warning_light_{category.lower()}",
+        name=f"Warning Light: {category.replace('_', ' ').capitalize()}",
+        icon="mdi:alert-circle-outline",
+    )
+    @property
+    def native_value(self)-> str | None:  #
+        if health := self.vehicle.health:
+            for light in health.warning_lights:
+                if light.category == self.category:
+                    return ",".join(light.defects)
+        return ""
+
+    def required_capabilities(self) -> list[CapabilityId]:
+        return [CapabilityId.VEHICLE_HEALTH_WARNINGS]
 
 class Mileage(MySkodaSensor):
     """The vehicle's mileage (total kilometers driven)."""
@@ -312,12 +438,13 @@ class Mileage(MySkodaSensor):
 
     @property
     def native_value(self) -> int | None:  # noqa: D102
+        print("mileage")
+        print(self.vehicle.health)
         if health := self.vehicle.health:
             return health.mileage_in_km
 
     def required_capabilities(self) -> list[CapabilityId]:
-        return [CapabilityId.VEHICLE_HEALTH_INSPECTION]
-
+        return [CapabilityId.VEHICLE_HEALTH_WARNINGS]
 
 class InspectionInterval(MySkodaSensor):
     """The number of days before next inspection."""
