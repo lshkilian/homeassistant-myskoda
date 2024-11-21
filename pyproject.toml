@@ -13,7 +13,7 @@ readme = "README.md"
 python = "~3.12,<3.13"
 homeassistant = "^2024.10.0"
 voluptuous = "^0.15.2"
-myskoda = { path = "./myskoda-0.0.1.tar.gz" }
+myskoda = { path = "./custom_components/myskoda/myskoda-0.0.1.tar.gz" }
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.7.4"
