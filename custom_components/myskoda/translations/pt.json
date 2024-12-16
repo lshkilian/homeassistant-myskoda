@@ -121,6 +121,9 @@
         "number": {
             "charge_limit": {
                 "name": "Limite de carga"
+            },
+            "auxiliary_heater_duration": {
+                "name": "Duração do aquecedor"
             }
         },
         "sensor": {
@@ -174,6 +177,15 @@
             "remaining_charging_time": {
                 "name": "Tempo de carga restante"
             },
+            "operation": {
+                "name": "Última operação",
+                "state": {
+                    "in_progress": "Em andamento",
+                    "completed_success": "Concluído com êxito",
+                    "completed_warning": "Concluído com aviso",
+                    "error": "Erro"
+                }
+            },
             "software_version": {
                 "name": "Versão do software"
             },
@@ -188,6 +200,9 @@
             },
             "electric_range": {
                 "name": "Alcance elétrico"
+            },
+            "outside_temperature": {
+                "name": "Temperatura de fora"
             }
         },
         "switch": {
@@ -205,6 +220,21 @@
             },
             "window_heating": {
                 "name": "Aquecimento da janela"
+            },
+            "ac_at_unlock": {
+                "name": "Corrente alternada quando Desbloqueada"
+            },
+            "ac_without_external_power": {
+                "name": "Corrente alternada Sem Energia Externa"
+            },
+            "ac_seat_heating_front_left": {
+                "name": "Aquecimento de Assento Esquerdo com corrente alternada"
+            },
+            "ac_seat_heating_front_right": {
+                "name": "Aquecimento de Assento Direito com corrente alternada"
+            },
+            "ac_window_heating": {
+                "name": "Aquecimento da Janela com corrente alternada"
             }
         },
         "button": {
@@ -213,6 +243,9 @@
             },
             "flash": {
                 "name": "Piscar"
+            },
+            "generate_fixtures": {
+                "name": "Gerar instalações"
             }
         }
     },
@@ -220,6 +253,10 @@
         "new_tandc": {
             "title": "Rever novos termos e condições do MySkoda",
             "description": "Foi detetado um erro de início de sessão devido à falta de aceitação dos Termos e condições.\n\nSkoda talvez tenha emitido novos Termos e condições.\n\nPor favor, reinicie a sua sessão na aplicação MySkoda para revê-las.\nEsta integração não continuará sem aceitar os Termos e condições."
+        },
+        "spin_error": {
+            "title": "S-PIN incorreto detetado",
+            "description": "Nós recebemos um erro indicando que o seu S-PIN está incorreto.\n\nInsira o S-PIN correto nas definições de integração."
         }
     },
     "options": {

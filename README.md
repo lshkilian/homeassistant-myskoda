@@ -1,7 +1,7 @@
-![Version](https://img.shields.io/github/v/release/skodaconnect/homeassistant-myskoda)
+[![Version](https://img.shields.io/github/v/release/skodaconnect/homeassistant-myskoda)](https://github.com/skodaconnect/homeassistant-myskoda/releases)
 ![Downloads](https://img.shields.io/github/downloads/skodaconnect/homeassistant-myskoda/total)
 ![Contributors](https://img.shields.io/github/contributors/skodaconnect/homeassistant-myskoda)
-![Translation](https://badges.crowdin.net/homeassistant-myskoda/localized.svg)
+[![Translation](https://badges.crowdin.net/homeassistant-myskoda/localized.svg)](https://crowdin.com/project/homeassistant-myskoda/invite?h=1c4f8152c707b666f570b9cb68678ece2227331)
 
 # MySkoda Integration for Skoda vehicles compatible with MySkoda-App.
 
@@ -57,10 +57,17 @@ If your desired language is not available, please [open an issue](https://github
 - Reduced Current
 - Battery Care Mode
 - Doors
+- AC when Unlocked
+- AC without External Power
+- Left Seat Heating with AC
+- Right Seat Heating with AC
+- Window Heating with AC
+
 
 ### Buttons
 - Honk and Flash
 - Flash
+- Generate Fixtures (deprecated, use Device Diagnostics instead)
 
 ### Climate
 
@@ -100,7 +107,7 @@ You can manually install this integration as an custom_component under Home Assi
 The `myskoda` repository is also compatible with HACS (Home Assistant Community Store), making installation and updates easier.
 
 1. **Install HACS** (if not already installed):
-   - Follow instructions here: [HACS Installation Guide](https://hacs.xyz/docs/installation/manual)
+   - Follow instructions here: [HACS Installation Guide](https://hacs.xyz/docs/use/download/download/#to-download-hacs)
 2. **Add `myskoda` Repository** to HACS:
    - In Home Assistant, go to **HACS** > **Settings** tab.
    - Select **Custom Repositories** and add the repository URL `https://github.com/skodaconnect/homeassistant-myskoda`.
@@ -110,7 +117,7 @@ The `myskoda` repository is also compatible with HACS (Home Assistant Community 
 
 Following these steps should successfully install the `myskoda` integration for use with your Home Assistant setup.
 
-For more guidance on HACS, you can refer to the [HACS Getting Started Guide](https://hacs.xyz/docs/basic/getting_started).
+For more guidance on HACS, you can refer to the [HACS Getting Started Guide](https://hacs.xyz/docs/use/).
 
 ## Enable debug logging
 
@@ -177,6 +184,29 @@ The opposite to S-PIN is read-only mode. In this mode, all buttons, switches and
 In order not to accidentally delete data, we do not delete the entities
 
 Also, if you disable read-only mode, the buttons, switches, etc will become available again.
+
+## Fixture generation
+
+The Generate Fixtures button allows users to generate car-related fixtures directly from the Home Assistant UI without requiring the use of myskoda[cli].
+
+When pressed, the button triggers the fixture generation process, and the generated fixtures are logged at the Info level in the Home Assistant Core log. Upon successful completion, a notification is displayed in the UI to inform the user that the fixtures have been successfully generated.
+
+This feature simplifies the process of creating fixtures by providing a user-friendly interface for initiating the operation.
+
+## Diagnostics
+
+In addition to **Generate Fixtures feature** which generates the vehicle fixtures into Home Assitant Core log, the **Diagnostics** feature allows you to directly download diagnostic data for sharing in issue reports. Providing diagnostics data when reporting an issue helps developers diagnose and resolve your problem more efficiently.
+
+You can download the diagnostics data as a text file from the device page or the integrations dashboard.
+
+Diagnostics file include:
+
+- Home Assistant version and details
+- List of installed components and their versions
+- MySkoda integration version and details
+- Anonymized vehicle fixtures from the MySkoda API. (fixtures can be found under the `data` key in the diagnostics response)
+
+> **Note:** Vehicle fixtures are responses from all available MySkoda API endpoints always returned in both raw and serialized format.
 
 ## Disclaimer
 

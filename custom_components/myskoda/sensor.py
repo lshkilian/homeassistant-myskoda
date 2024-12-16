@@ -11,9 +11,11 @@ from homeassistant.components.sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     PERCENTAGE,
+    EntityCategory,
     UnitOfLength,
     UnitOfPower,
     UnitOfSpeed,
+    UnitOfTemperature,
     UnitOfTime,
 )
 from homeassistant.core import HomeAssistant
@@ -24,9 +26,9 @@ from myskoda.models import charging
 from myskoda.models.charging import Charging, ChargingStatus
 from myskoda.models.health import WarningLightCategory
 from myskoda.models.info import CapabilityId
-from myskoda.models.driving_range import EngineType
+from myskoda.models.operation_request import OperationStatus
 
-from .const import COORDINATORS, DOMAIN
+from .const import COORDINATORS, DOMAIN, OUTSIDE_TEMP_MIN_BOUND, OUTSIDE_TEMP_MAX_BOUND
 from .entity import MySkodaEntity
 from .utils import add_supported_entities
 
@@ -45,6 +47,11 @@ async def async_setup_entry(
             ChargingPower,
             ChargingRate,
             ChargingState,
+            CombustionRange,
+            ElectricRange,
+            FuelLevel,
+            InspectionInterval,
+            InspectionIntervalKM,
             LastUpdated,
             Mileage,
             WarningLightAssistance,
@@ -54,17 +61,14 @@ async def async_setup_entry(
             WarningLightLighting,
             WarningLightTire,
             WarningLightOther,
-            RemainingChargingTime,
-            Range,
-            SoftwareVersion,
-            TargetBatteryPercentage,
-            InspectionInterval,
-            ElectricRange,
-            CombustionRange,
-            FuelLevel,
-            InspectionIntervalKM,
             OilServiceIntervalDays,
             OilServiceIntervalKM,
+            Operation,
+            OutsideTemperature,
+            Range,
+            RemainingChargingTime,
+            SoftwareVersion,
+            TargetBatteryPercentage,
         ],
         coordinators=hass.data[DOMAIN][config.entry_id][COORDINATORS],
         async_add_entities=async_add_entities,
@@ -73,6 +77,54 @@ async def async_setup_entry(
 
 class MySkodaSensor(MySkodaEntity, SensorEntity):
     pass
+
+
+class Operation(MySkodaSensor):
+    """Report the most recent operation."""
+
+    entity_description = SensorEntityDescription(
+        key="operation",
+        translation_key="operation",
+        device_class=SensorDeviceClass.ENUM,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    )
+
+    _attr_options = [status.value.lower() for status in OperationStatus]
+
+    @property
+    def native_value(self) -> str | None:  # noqa: D102
+        """Returns the status of the last seen operation."""
+        if self.operations:
+            last_operation = list(self.operations.values())[-1]
+            return last_operation.operation.status.lower()
+
+    @property
+    def extra_state_attributes(self) -> dict:
+        """Returns additional attributes for the operation sensor.
+
+        - request_id, operation name, error_code and timestamp of the last seen operation.
+        - history: a list of dicts with the same fields for the previously seen operations.
+        """
+        attributes = {}
+        if not self.operations:
+            return attributes
+
+        operations = list(self.operations.values())
+        operations.reverse()
+        filtered = [
+            {
+                "request_id": event.operation.request_id,
+                "operation": event.operation.operation,
+                "status": event.operation.status.lower(),
+                "error_code": event.operation.error_code,
+                "timestamp": event.timestamp,
+            }
+            for event in operations
+        ]
+        attributes = filtered[0]
+        attributes["history"] = filtered[1:]
+
+        return attributes
 
 
 class SoftwareVersion(MySkodaSensor):
@@ -124,41 +176,44 @@ class BatteryPercentage(ChargingSensor):
     @property
     def native_value(self) -> int | None:  # noqa: D102
         if status := self._status():
-            return status.battery.state_of_charge_in_percent
+            if status.battery.state_of_charge_in_percent:
+                return status.battery.state_of_charge_in_percent
 
     @property
     def icon(self) -> str:  # noqa: D102
         if not (status := self._status()):
             return "mdi:battery-outline"
 
-        if status.battery.state_of_charge_in_percent >= 95:
-            suffix = "100"
-        elif status.battery.state_of_charge_in_percent >= 85:
-            suffix = "90"
-        elif status.battery.state_of_charge_in_percent >= 75:
-            suffix = "80"
-        elif status.battery.state_of_charge_in_percent >= 65:
-            suffix = "70"
-        elif status.battery.state_of_charge_in_percent >= 55:
-            suffix = "60"
-        elif status.battery.state_of_charge_in_percent >= 45:
-            suffix = "50"
-        elif status.battery.state_of_charge_in_percent >= 35:
-            suffix = "40"
-        elif status.battery.state_of_charge_in_percent >= 25:
-            suffix = "30"
-        elif status.battery.state_of_charge_in_percent >= 15:
-            suffix = "20"
-        elif status.battery.state_of_charge_in_percent >= 5:
-            suffix = "10"
-        else:
-            suffix = "outline"
+        if soc := status.battery.state_of_charge_in_percent:
+            if soc >= 95:
+                suffix = "100"
+            elif soc >= 85:
+                suffix = "90"
+            elif soc >= 75:
+                suffix = "80"
+            elif soc >= 65:
+                suffix = "70"
+            elif soc >= 55:
+                suffix = "60"
+            elif soc >= 45:
+                suffix = "50"
+            elif soc >= 35:
+                suffix = "40"
+            elif soc >= 25:
+                suffix = "30"
+            elif soc >= 15:
+                suffix = "20"
+            elif soc >= 5:
+                suffix = "10"
+            else:
+                suffix = "outline"
 
-        if status.state != charging.ChargingState.CONNECT_CABLE:
-            return f"mdi:battery-charging-{suffix}"
-        if suffix == "100":
-            return "mdi:battery"
-        return f"mdi:battery-{suffix}"
+            if status.state != charging.ChargingState.CONNECT_CABLE:
+                return f"mdi:battery-charging-{suffix}"
+            if suffix == "100":
+                return "mdi:battery"
+            return f"mdi:battery-{suffix}"
+        return "mdi:battery-unknown"
 
 
 class ChargingPower(ChargingSensor):
@@ -616,3 +671,26 @@ class LastUpdated(MySkodaSensor):
 
     def required_capabilities(self) -> list[CapabilityId]:
         return [CapabilityId.STATE]
+
+
+class OutsideTemperature(MySkodaSensor):
+    """Measured temperature outside the car."""
+
+    entity_description = SensorEntityDescription(
+        key="outside_temperature",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        translation_key="outside_temperature",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        state_class=SensorStateClass.MEASUREMENT,
+    )
+
+    @property
+    def native_value(self) -> float | None:  # noqa: D102
+        for source in [self.vehicle.auxiliary_heating, self.vehicle.air_conditioning]:
+            if source and (outside_temp := source.outside_temperature):
+                temp_value = outside_temp.temperature_value
+                if OUTSIDE_TEMP_MIN_BOUND < temp_value < OUTSIDE_TEMP_MAX_BOUND:
+                    return temp_value
+
+    def required_capabilities(self) -> list[CapabilityId]:
+        return [CapabilityId.OUTSIDE_TEMPERATURE]

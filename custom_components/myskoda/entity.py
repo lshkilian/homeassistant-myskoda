@@ -4,6 +4,7 @@ from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from myskoda import Vehicle
+from myskoda.event import EventOperation
 from myskoda.models.info import CapabilityId
 
 from .const import DOMAIN
@@ -32,6 +33,10 @@ class MySkodaEntity(CoordinatorEntity):
         return self.coordinator.data.vehicle
 
     @property
+    def operations(self) -> dict[str, EventOperation]:
+        return self.coordinator.data.operations
+
+    @property
     def device_info(self) -> DeviceInfo:  # noqa: D102
         return {
             "identifiers": {(DOMAIN, self.vehicle.info.vin)},
@@ -58,6 +63,14 @@ class MySkodaEntity(CoordinatorEntity):
         return any(
             self.vehicle.has_capability(cap) for cap in self.forbidden_capabilities()
         )
+
+    def has_any_capability(self, cap: list[CapabilityId]) -> bool:
+        """Check if any capabilities in the list is supported."""
+        return any(self.vehicle.has_capability(capability) for capability in cap)
+
+    def has_all_capabilities(self, cap: list[CapabilityId]) -> bool:
+        """Check if all capabilities in the list are supported."""
+        return all(self.vehicle.has_capability(capability) for capability in cap)
 
     def get_renders(self) -> dict[str, str]:
         """Return a dict of all vehicle image render URLs, keyed by view_point.

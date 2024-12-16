@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "homeassistant-myskoda"
-version = "1.10.0"
+version = "1.15.3"
 description = "HomeAssistant integration for MySkoda."
 authors = [
     "Frederick Gnodtke <frederick@gnodtke.net>",
@@ -8,17 +8,18 @@ authors = [
     "Fabrice Devaux <fabrice.devaux@gmail.com>",
 ]
 readme = "README.md"
+package-mode = false
 
 [tool.poetry.dependencies]
-python = "~3.12,<3.13"
+python = "~3.12,<3.14"
 homeassistant = "^2024.10.0"
 voluptuous = "^0.15.2"
-myskoda = { path = "./custom_components/myskoda/myskoda-0.0.1.tar.gz" }
+myskoda = { path = "./custom_components/myskoda/myskoda-0.0.2.tar.gz" }
 
 [tool.poetry.group.dev.dependencies]
-ruff = "^0.7.4"
+ruff = "^0.8.2"
 homeassistant-stubs = "^2024.10.0"
-pyright = "^1.1.389"
+pyright = "^1.1.390"
 
 [build-system]
 requires = ["poetry-core"]

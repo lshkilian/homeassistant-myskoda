@@ -121,6 +121,9 @@
         "number": {
             "charge_limit": {
                 "name": "Laddningsgräns"
+            },
+            "auxiliary_heater_duration": {
+                "name": "Värmarens varaktighet"
             }
         },
         "sensor": {
@@ -174,6 +177,15 @@
             "remaining_charging_time": {
                 "name": "Återstående laddningstid"
             },
+            "operation": {
+                "name": "Senaste åtgärd",
+                "state": {
+                    "in_progress": "Pågående",
+                    "completed_success": "Slutförd utan fel",
+                    "completed_warning": "Slutförd med varning",
+                    "error": "Fel"
+                }
+            },
             "software_version": {
                 "name": "Programvaruversion"
             },
@@ -188,6 +200,9 @@
             },
             "electric_range": {
                 "name": "Räckvidd el"
+            },
+            "outside_temperature": {
+                "name": "Utomhustemperatur"
             }
         },
         "switch": {
@@ -205,6 +220,21 @@
             },
             "window_heating": {
                 "name": "Fönstervärme"
+            },
+            "ac_at_unlock": {
+                "name": "AC vid upplåsning"
+            },
+            "ac_without_external_power": {
+                "name": "AC utan extern ström"
+            },
+            "ac_seat_heating_front_left": {
+                "name": "Vänster sätesvärmning med AC"
+            },
+            "ac_seat_heating_front_right": {
+                "name": "Höger sätesvärmning med AC"
+            },
+            "ac_window_heating": {
+                "name": "Fönstervärmning med AC"
             }
         },
         "button": {
@@ -213,6 +243,9 @@
             },
             "flash": {
                 "name": "Blinka"
+            },
+            "generate_fixtures": {
+                "name": "Skapa fixturer"
             }
         }
     },
@@ -220,6 +253,10 @@
         "new_tandc": {
             "title": "Granska de nya villkoren för MySkoda",
             "description": "Misslyckades med att logga in på grund av att användarvillkoren inte accepterades.\n\nSkoda kan ha utfärdat nya villkor.\n\nLogga ut och in igen i appen MySkoda för att granska dem.\nDenna integration kan inte fortsätta utan accepterade villkor."
+        },
+        "spin_error": {
+            "title": "Felaktig S-PIN upptäckt",
+            "description": "Vi fick en fel indikering gällande att din S-PIN är felaktig.\n\nAnge rätt S-PIN i integreringsinställningarna."
         }
     },
     "options": {
