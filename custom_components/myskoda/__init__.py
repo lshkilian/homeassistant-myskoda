@@ -17,7 +17,11 @@ from myskoda import (
     AuthorizationFailedError,
 )
 from myskoda.myskoda import TRACE_CONFIG
-from myskoda.auth.authorization import CSRFError, TermsAndConditionsError
+from myskoda.auth.authorization import (
+    CSRFError,
+    TermsAndConditionsError,
+    MarketingConsentError,
+)
 
 
 from .const import COORDINATORS, DOMAIN
@@ -44,11 +48,11 @@ PLATFORMS: list[Platform] = [
 ]
 
 
-async def async_setup_entry(hass: HomeAssistant, config: ConfigEntry) -> bool:
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up MySkoda integration from a config entry."""
 
     trace_configs = []
-    if config.options.get("tracing"):
+    if entry.options.get("tracing"):
         trace_configs.append(TRACE_CONFIG)
 
     session = async_create_clientsession(
@@ -57,40 +61,40 @@ async def async_setup_entry(hass: HomeAssistant, config: ConfigEntry) -> bool:
     myskoda = MySkoda(session, get_default_context(), mqtt_enabled=False)
 
     try:
-        await myskoda.connect(config.data["email"], config.data["password"])
+        await myskoda.connect(entry.data["email"], entry.data["password"])
     except AuthorizationFailedError as exc:
         _LOGGER.debug("Authorization with MySkoda failed.")
         raise ConfigEntryAuthFailed from exc
-    except TermsAndConditionsError as exc:
+    except (TermsAndConditionsError, MarketingConsentError) as exc:
         _LOGGER.error(
-            "New terms and conditions detected while logging in. Please log into the MySkoda app (may require a logout first) to access the new Terms and Conditions. This HomeAssistant integration currently can not continue."
+            "Change to terms and conditions or consents detected while logging in. Please log into the MySkoda app (may require a logout first) to access the new Terms and Conditions. This HomeAssistant integration currently can not continue."
         )
-        async_create_tnc_issue(hass, config.entry_id)
+        async_create_tnc_issue(hass, entry.entry_id)
         raise ConfigEntryNotReady from exc
     except (CSRFError, InvalidUrlClientError) as exc:
         _LOGGER.debug("An error occurred during login.")
         raise ConfigEntryNotReady from exc
     except ClientResponseError as err:
-        handle_aiohttp_error("setup", err, hass, config)
+        handle_aiohttp_error("setup", err, hass, entry)
     except Exception:
         _LOGGER.exception("Login with MySkoda failed for an unknown reason.")
         return False
 
-    async_delete_tnc_issue(hass, config.entry_id)
-    async_delete_spin_issue(hass, config.entry_id)
+    async_delete_tnc_issue(hass, entry.entry_id)
+    async_delete_spin_issue(hass, entry.entry_id)
 
     coordinators: dict[str, MySkodaDataUpdateCoordinator] = {}
     vehicles = await myskoda.list_vehicle_vins()
     for vin in vehicles:
-        coordinator = MySkodaDataUpdateCoordinator(hass, config, myskoda, vin)
+        coordinator = MySkodaDataUpdateCoordinator(hass, entry, myskoda, vin)
         await coordinator.async_config_entry_first_refresh()
         coordinators[vin] = coordinator
 
     hass.data.setdefault(DOMAIN, {})
-    hass.data[DOMAIN][config.entry_id] = {COORDINATORS: coordinators}
+    hass.data[DOMAIN][entry.entry_id] = {COORDINATORS: coordinators}
 
-    await hass.config_entries.async_forward_entry_setups(config, PLATFORMS)
-    config.async_on_unload(config.add_update_listener(_async_update_listener))
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    entry.async_on_unload(entry.add_update_listener(_async_update_listener))
 
     return True
 

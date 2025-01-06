@@ -42,6 +42,30 @@
             },
             "windows_open": {
                 "default": "mdi:car-door"
+            },
+            "door_open_front_left": {
+                "default": "mdi:car-door"
+            },
+            "door_open_front_right": {
+                "default": "mdi:car-door"
+            },
+            "door_open_rear_left": {
+                "default": "mdi:car-door"
+            },
+            "door_open_rear_right": {
+                "default": "mdi:car-door"
+            },
+            "window_open_front_left": {
+                "default": "mdi:car-door"
+            },
+            "window_open_front_right": {
+                "default": "mdi:car-door"
+            },
+            "window_open_rear_left": {
+                "default": "mdi:car-door"
+            },
+            "window_open_rear_right": {
+                "default": "mdi:car-door"
             }
         },
         "climate": {
@@ -61,9 +85,9 @@
             "charge_limit": {
                 "default": "mdi:battery-lock"
             },
-			"auxiliary_heater_duration": {
-				"default": "mdi:timer"
-			}
+            "auxiliary_heater_duration": {
+                "default": "mdi:timer"
+            }
         },
         "image": {
             "render_url_main": {
@@ -115,14 +139,23 @@
             "oil_service_in_km": {
                 "default": "mdi:oil"
             },
+            "adblue_range": {
+                "default": "mdi:gauge"
+            },
             "combustion_range": {
                 "default": "mdi:gas-station"
             },
             "electric_range": {
                 "default": "mdi:ev-station"
             },
+            "gas_range": {
+                "default": "mdi:gas-station"
+            },
             "fuel_level": {
                 "default": "mdi:fuel"
+            },
+            "gas_level": {
+                "default": "mdi:gauge"
             },
             "remaining_charging_time": {
                 "default": "mdi:timer"
@@ -130,15 +163,18 @@
             "operation": {
                 "default": "mdi:cog-transfer"
             },
+            "service_event": {
+                "default": "mdi:message-cog-outline"
+            },
             "software_version": {
                 "default": "mdi:update"
             },
             "target_battery_percentage": {
                 "default": "mdi:percent"
             },
-	    "outside_temperature": {
-		"default": "mdi:thermometer"
-	    }
+            "outside_temperature": {
+                "default": "mdi:thermometer"
+            }
         },
         "switch": {
             "battery_care_mode": {
@@ -163,6 +199,12 @@
                 "default": "mdi:current-ac",
                 "state": {
                     "on": "mdi:turtle"
+                }
+            },
+            "auto_unlock_plug": {
+                "default": "mdi:lock",
+                "state": {
+                    "on": "mdi:lock-open"
                 }
             },
             "window_heating": {
@@ -199,6 +241,24 @@
                 "default": "mdi:toggle-switch-off",
                 "state": {
                     "on": "mdi:toggle-switch"
+                }
+            },
+            "departure_timer_1": {
+                "default": "mdi:timer-cancel",
+                "state": {
+                    "on": "mdi:timer-check"
+                }
+            },
+            "departure_timer_2": {
+                "default": "mdi:timer-cancel",
+                "state": {
+                    "on": "mdi:timer-check"
+                }
+            },
+            "departure_timer_3": {
+                "default": "mdi:timer-cancel",
+                "state": {
+                    "on": "mdi:timer-check"
                 }
             }
         },

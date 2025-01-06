@@ -88,6 +88,62 @@
                     "off": "Fechado",
                     "on": "Aberto"
                 }
+            },
+            "door_open_front_left": {
+                "name": "Porta frontal esquerda: ",
+                "state": {
+                    "off": "Fechada",
+                    "on": "Aberta"
+                }
+            },
+            "door_open_front_right": {
+                "name": "Porta frontal direita: ",
+                "state": {
+                    "off": "Fechada",
+                    "on": "Aberta"
+                }
+            },
+            "door_open_rear_left": {
+                "name": "Porta traseira esquerda: ",
+                "state": {
+                    "off": "Fechada",
+                    "on": "Aberta"
+                }
+            },
+            "door_open_rear_right": {
+                "name": "Porta traseira direita: ",
+                "state": {
+                    "off": "Fechada",
+                    "on": "Aberta"
+                }
+            },
+            "window_open_front_left": {
+                "name": "Janela frontal esquerda: ",
+                "state": {
+                    "off": "Fechada",
+                    "on": "Aberta"
+                }
+            },
+            "window_open_front_right": {
+                "name": "Janela frontal direita: ",
+                "state": {
+                    "off": "Fechada",
+                    "on": "Aberta"
+                }
+            },
+            "window_open_rear_left": {
+                "name": "Janela traseira esquerda:",
+                "state": {
+                    "off": "Fechada",
+                    "on": "Aberta"
+                }
+            },
+            "window_open_rear_right": {
+                "name": "Janela traseira direita: ",
+                "state": {
+                    "off": "Fechada",
+                    "on": "Aberta"
+                }
             }
         },
         "climate": {
@@ -109,6 +165,9 @@
             }
         },
         "image": {
+            "render_light_3x": {
+                "name": "Renderização do estado da luz do veículo"
+            },
             "render_vehicle_main": {
                 "name": "Renderização principal do veículo"
             }
@@ -195,6 +254,15 @@
             "fuel_level": {
                 "name": "Nível de combustível"
             },
+            "adblue_range": {
+                "name": "Alcance AdBlue"
+            },
+            "gas_level": {
+                "name": "Nível do gás"
+            },
+            "gas_range": {
+                "name": "Alcance do gás"
+            },
             "combustion_range": {
                 "name": "Alcance de combustão"
             },
@@ -218,6 +286,9 @@
             "reduced_current": {
                 "name": "Corrente reduzida"
             },
+            "auto_unlock_plug": {
+                "name": "Desbloquear plug quando carregado"
+            },
             "window_heating": {
                 "name": "Aquecimento da janela"
             },
@@ -235,6 +306,15 @@
             },
             "ac_window_heating": {
                 "name": "Aquecimento da Janela com corrente alternada"
+            },
+            "departure_timer_1": {
+                "name": "Tempo de Partida 1"
+            },
+            "departure_timer_2": {
+                "name": "Tempo de Partida 2"
+            },
+            "departure_timer_3": {
+                "name": "Tempo de Partida 3"
             }
         },
         "button": {

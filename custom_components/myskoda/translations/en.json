@@ -88,6 +88,62 @@
                     "off": "Closed",
                     "on": "Open"
                 }
+            },
+            "door_open_front_left": {
+                "name": "Door Open Front Left",
+                "state": {
+                    "off": "Closed",
+                    "on": "Open"
+                }
+            },
+            "door_open_front_right": {
+                "name": "Door Open Front Right",
+                "state": {
+                    "off": "Closed",
+                    "on": "Open"
+                }
+            },
+            "door_open_rear_left": {
+                "name": "Door Open Rear Left",
+                "state": {
+                    "off": "Closed",
+                    "on": "Open"
+                }
+            },
+            "door_open_rear_right": {
+                "name": "Door Open Rear Right",
+                "state": {
+                    "off": "Closed",
+                    "on": "Open"
+                }
+            },
+            "window_open_front_left": {
+                "name": "Window Open Front Left",
+                "state": {
+                    "off": "Closed",
+                    "on": "Open"
+                }
+            },
+            "window_open_front_right": {
+                "name": "Window Open Front Right",
+                "state": {
+                    "off": "Closed",
+                    "on": "Open"
+                }
+            },
+            "window_open_rear_left": {
+                "name": "Window Open Rear Left",
+                "state": {
+                    "off": "Closed",
+                    "on": "Open"
+                }
+            },
+            "window_open_rear_right": {
+                "name": "Window Open Rear Right",
+                "state": {
+                    "off": "Closed",
+                    "on": "Open"
+                }
             }
         },
         "climate": {
@@ -109,6 +165,9 @@
             }
         },
         "image": {
+            "render_light_3x": {
+                "name": "Light Status Render of Vehicle"
+            },
             "render_vehicle_main": {
                 "name": "Main Render of Vehicle"
             }
@@ -179,12 +238,15 @@
             },
             "operation": {
                 "name": "Last Operation",
-		"state": {
-		    "in_progress": "In Progress", 
-		    "completed_success": "Completed succesfully", 
-		    "completed_warning": "Completed with warning", 
-		    "error": "Error"
-		}
+                "state": {
+                    "in_progress": "In Progress",
+                    "completed_success": "Completed succesfully",
+                    "completed_warning": "Completed with warning",
+                    "error": "Error"
+                }
+            },
+            "service_event": {
+                "name": "Last Service Event"
             },
             "software_version": {
                 "name": "Software Version"
@@ -195,15 +257,24 @@
             "fuel_level": {
                 "name": "Fuel Level"
             },
+            "adblue_range": {
+                "name": "AdBlue Range"
+            },
+            "gas_level": {
+                "name": "Gas Level"
+            },
+            "gas_range": {
+                "name": "Gas Range"
+            },
             "combustion_range": {
                 "name": "Combustion Range"
             },
             "electric_range": {
                 "name": "Electric Range"
             },
-	    "outside_temperature": {
-		"name": "Outside Temperature"
-	    }
+            "outside_temperature": {
+                "name": "Outside Temperature"
+            }
         },
         "switch": {
             "battery_care_mode": {
@@ -217,6 +288,9 @@
             },
             "reduced_current": {
                 "name": "Reduced Current"
+            },
+            "auto_unlock_plug": {
+                "name": "Unlock Plug when Charged"
             },
             "window_heating": {
                 "name": "Window Heating"
@@ -235,6 +309,15 @@
             },
             "ac_window_heating": {
                 "name": "Window Heating with AC"
+            },
+            "departure_timer_1": {
+                "name": "Departure Timer 1"
+            },
+            "departure_timer_2": {
+                "name": "Departure Timer 2"
+            },
+            "departure_timer_3": {
+                "name": "Departure Timer 3"
             }
         },
         "button": {
@@ -251,8 +334,8 @@
     },
     "issues": {
         "new_tandc": {
-            "title": "Review new Terms and Conditions for MySkoda",
-            "description": "Detected login failure due to missing acceptance of Terms and Conditions.\n\nSkoda may have issued new Terms and Conditions.\n\nPlease log out and back in of the MySkoda app to review them.\nThis integration cannot continue without accepted Terms and Conditions."
+            "title": "Review new consents and T/C for MySkoda",
+            "description": "Detected login failure due to missing acceptance of Terms and Conditions or consents.\n\nSkoda may have issued new Terms and Conditions or requires new consents.\n\nPlease log out and back in of the MySkoda app to review them.\nThis integration cannot continue right now."
         },
         "spin_error": {
             "title": "Incorrect S-PIN detected",
