@@ -284,6 +284,7 @@ class MySkodaDataUpdateCoordinator(DataUpdateCoordinator[State]):
             OperationName.SET_AIR_CONDITIONING_TARGET_TEMPERATURE,
             OperationName.START_WINDOW_HEATING,
             OperationName.STOP_WINDOW_HEATING,
+            OperationName.SET_AIR_CONDITIONING_TIMERS,
         ]:
             await self.update_air_conditioning()
         if event.operation.operation in [
@@ -323,9 +324,10 @@ class MySkodaDataUpdateCoordinator(DataUpdateCoordinator[State]):
         match event_data:
             case ServiceEventChargingData():
                 if vehicle.charging and (status := vehicle.charging.status):
-                    status.battery.remaining_cruising_range_in_meters = (
-                        event_data.charged_range * 1000
-                    )
+                    if event_data.charged_range:
+                        status.battery.remaining_cruising_range_in_meters = (
+                            event_data.charged_range * 1000
+                        )
                     status.battery.state_of_charge_in_percent = event_data.soc
                     if event_data.time_to_finish is not None:
                         status.remaining_time_to_fully_charged_in_minutes = (

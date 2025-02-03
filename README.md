@@ -16,7 +16,7 @@ Please [join our Discord](https://discord.gg/t7az2hSJXq) and help development by
 ## Translations
 
 You can help us translate your MySkoda integration into your language!
-Just [join our Crowdin project](https://crowdin.com/project/homeassistant-myskoda/invite?h=1c4f8152c707b666f570b9cb68678ece2227331)
+Just [join our Crowdin project](https://crowdin.com/project/homeassistant-myskoda/invite?h=1c4f8152c707b666f570b9cb68678ece2227331).
 If your desired language is not available, please [open an issue](https://github.com/skodaconnect/homeassistant-myskoda/issues/new/choose) and let us know about it!
 
 ## Capabilities
@@ -32,12 +32,19 @@ If your desired language is not available, please [open an issue](https://github
 - Charge Type
 - Charging State
 - Remaining Charging Time
-- Last Updated
+- [Last Updated](#last-updated-sensor)
 - Maintenance Interval
 - Oil Service Interval
 - Fuel Level
 - Combustion range
 - Electric range
+
+#### Last Updated sensor
+
+Provides timestamp when the vehicle has updated own [status information](https://myskoda.readthedocs.io/en/latest/reference/models/status/)
+to Skoda servers last time.
+
+This is different from [Last Service Event](#last-service-event).
 
 ### Binary Sensors
 
@@ -71,6 +78,7 @@ If your desired language is not available, please [open an issue](https://github
 - Right Seat Heating with AC
 - Window Heating with AC
 - Departure Timer 1,2 & 3 (timer configuration is stored inside custom attributes)
+- AirConditioning Timer 1,2 & 3 (timer configuration is stored inside custom attributes)
 
 
 ### Buttons
@@ -98,6 +106,65 @@ If you need a binary sensor to report if the vehicle is in motion this can be ac
 {% if states('device_tracker.skoda_enyaq_position') == 'vehicle_in_motion' %}
 True
 {% endif %}
+```
+
+### Diagnostics Sensors
+
+#### Main Render of Vehicle
+
+The sensor contains the vehicle image as provided by Skoda. This can be used in Home Assistant in different cards, for example:
+
+```
+type: picture
+image_entity: image.skoda_enyaq_main_render_of_vehicle
+```
+
+Besides, there is a set of attributes of the sensor that contains other images provided by the Skoda servers. Example of a templated sensor for an image:
+
+```
+- image:
+    - name: "Skoda exterior image front"
+      url: >
+        {{ states.image.skoda_enyaq_main_render_of_vehicle.attributes.composite_renders.charging_light[0].exterior_front }}
+```
+
+#### Last Operation
+
+The sensor provides the status of the last performed operation. Possible values are "In Progress", "Completed succesfully",
+"Completed with warning" or "Error". The sensor changes the value in response to operations requests like charging start/stop,
+heating requests, lock/unlock, etc.
+
+The attributes of the sensor contain also additional information like operation name and timestamp.
+The previous event information is provided as "history" attribute.
+
+
+#### Last Service Event
+
+The sensor provides the timestamp of the last service event that has been reported by the vehicle. Following service events are monitored:
+- change-access
+- change-charge-mode
+- change-lights
+- change-remaining-time
+- change-soc
+- charging-completed
+- charging-status-changed
+- climatisation-completed
+- departure-ready
+- departure-status-changed
+
+The attributes of the sensor contain additional information about the service event (name, timestamp) as well as previously received
+event in "history".
+
+NOTE: not all vehicles report all service events.
+
+#### Car Info (VIN)
+
+Sometimes you might need to access a VIN quickly and it might be convenient to use the [Search](https://www.home-assistant.io/integrations/search/) to obtain this data quickly.
+
+To achieve this, you can create a template sensor that prints this data using any entity identifier assigned to your car.
+
+```
+{{ device_attr(device_id('sensor.skoda_enyaq_mileage'), 'serial_number') }}
 ```
 
 ## Sending updates
@@ -141,6 +208,18 @@ The `myskoda` repository is also compatible with HACS (Home Assistant Community 
 Following these steps should successfully install the `myskoda` integration for use with your Home Assistant setup.
 
 For more guidance on HACS, you can refer to the [HACS Getting Started Guide](https://hacs.xyz/docs/use/).
+
+## Configuration
+
+After installation but before first initialization the integration requests the configuration parameters.
+The configuration includes:
+- login and password for the account that will control the vehicle (can be same as in MySkoda application)
+- polling interval in minutes, see [Customize polling interval](#customize-polling-interval)
+- S-PIN, the pin is required for certain operations to be performed, see [S-PIN](#s-pin) section for details
+
+The configuration parameters (except login and password) are available for modification after initialization
+from Integrations > MySkoda > Hubs > Select your account > Configure. The change of configuration will trigger
+the reload of the integration.
 
 ## Enable debug logging
 

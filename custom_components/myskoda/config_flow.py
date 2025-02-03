@@ -7,6 +7,8 @@ from typing import Any
 
 import voluptuous as vol
 
+from aiohttp.client_exceptions import ClientResponseError
+
 from homeassistant.config_entries import (
     ConfigEntry,
     ConfigFlow as BaseConfigFlow,
@@ -25,6 +27,13 @@ from homeassistant.helpers.schema_config_entry_flow import (
 )
 from homeassistant.util.ssl import get_default_context
 from myskoda import MySkoda
+from myskoda.auth.authorization import (
+    AuthorizationError,
+    NotAuthorizedError,
+    AuthorizationFailedError,
+    TermsAndConditionsError,
+    MarketingConsentError,
+)
 
 from .const import (
     DOMAIN,
@@ -91,7 +100,8 @@ OPTIONS_FLOW = {
 class ConfigFlow(BaseConfigFlow, domain=DOMAIN):
     """Handle a config flow for MySkoda."""
 
-    VERSION = 1
+    VERSION = 2
+    MINOR_VERSION = 2
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -106,10 +116,17 @@ class ConfigFlow(BaseConfigFlow, domain=DOMAIN):
 
         try:
             await validate_input(self.hass, user_input)
-        except CannotConnect:
+        except (CannotConnect, ClientResponseError):
             errors["base"] = "cannot_connect"
-        except InvalidAuth:
+        except (
+            InvalidAuth,
+            AuthorizationError,
+            AuthorizationFailedError,
+            NotAuthorizedError,
+        ):
             errors["base"] = "invalid_auth"
+        except (TermsAndConditionsError, MarketingConsentError):
+            errors["base"] = "relogin_in_app"
         except Exception:  # pylint: disable=broad-except
             _LOGGER.exception("Unexpected exception")
             errors["base"] = "unknown"
