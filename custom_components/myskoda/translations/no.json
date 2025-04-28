@@ -1,20 +1,32 @@
 {
     "config": {
         "abort": {
-            "already_configured": "Enheten er allerede konfigurert"
+            "already_configured": "Enheten er allerede konfigurert",
+            "reauth_successful": "Reautentisering har lykkes.",
+            "no_entry": "Kunne ikke finne MySkoda konfigurasjonen. Vennligst sjekk dine logger og åpne et problem på GitHub."
         },
         "error": {
             "cannot_connect": "Klarte ikke å koble til",
             "invalid_auth": "Ugyldig autentisering",
             "relogin_in_app": "En feil har blitt oppdaget under innlogging. Det kan være nødvendig å logge inn på nytt i MySkoda appen.",
-            "unknown": "En uventet feil oppstod. Vennligst sjekk HomeAssistant loggfiler."
+            "unknown": "En uventet feil oppstod. Vennligst sjekk HomeAssistant loggfiler.",
+            "no_spin": "S-PIN-koden mangler i konfigurasjonen. Vennligst rekonfigurer integrasjonen og prøv på nytt."
         },
         "step": {
+            "reauth_confirm": {
+                "data": {
+                    "email": "E-postadresse",
+                    "password": "Passord"
+                },
+                "description": "Autentisering til MySkoda mislyktes. Prøv på nytt fra din MySkoda app.",
+                "title": "Re-autentiser MySkoda"
+            },
             "user": {
                 "data": {
                     "email": "E-post",
                     "password": "Passord"
-                }
+                },
+                "description": "Skriv inn opplysningene fra din MySkoda-app."
             }
         }
     },
@@ -187,6 +199,9 @@
             }
         },
         "sensor": {
+            "aux_estimated_time_left_to_reach_target_temperature": {
+                "name": "Kupévarmers tid for å nå måltemperaturen"
+            },
             "battery_percentage": {
                 "name": "Batteriprosent"
             },
@@ -216,11 +231,14 @@
                     "ready_for_charging": "Klar for lading"
                 }
             },
+            "estimated_time_left_to_reach_target_temperature": {
+                "name": "Tid for å nå måltemperaturen"
+            },
             "inspection": {
                 "name": "Neste inspeksjon"
             },
             "inspection_in_km": {
-                "name": "Neste inspeksjon i km"
+                "name": "Neste inspeksjon"
             },
             "mileage": {
                 "name": "Kilometerstand"
@@ -229,7 +247,7 @@
                 "name": "Oljeservice"
             },
             "oil_service_in_km": {
-                "name": "Neste oljeservice i km"
+                "name": "Oljeservice"
             },
             "range": {
                 "name": "Rekkevidde"
@@ -336,9 +354,6 @@
             },
             "flash": {
                 "name": "Blink"
-            },
-            "generate_fixtures": {
-                "name": "Generer testdata"
             }
         }
     },

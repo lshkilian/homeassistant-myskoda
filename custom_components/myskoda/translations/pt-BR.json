@@ -9,7 +9,8 @@
             "cannot_connect": "Falhou ao conectar",
             "invalid_auth": "Autenticação inválida",
             "relogin_in_app": "Um erro foi detectado durante o registro. Talvez seja necessário registrar-se novamente no MySkoda.",
-            "unknown": "Ocorreu um erro inesperado. Verifique os arquivos de registro do HomeAssistant."
+            "unknown": "Ocorreu um erro inesperado. Verifique os arquivos de registro do HomeAssistant.",
+            "no_spin": "O S-PIN está faltando para a configuração. Reconfigure a integração e tente novamente."
         },
         "step": {
             "reauth_confirm": {
@@ -198,6 +199,9 @@
             }
         },
         "sensor": {
+            "aux_estimated_time_left_to_reach_target_temperature": {
+                "name": "O tempo de aquecimento para alcançar a temperatura"
+            },
             "battery_percentage": {
                 "name": "Porcentagem da bateria"
             },
@@ -227,11 +231,14 @@
                     "ready_for_charging": "Pronto para carregar"
                 }
             },
+            "estimated_time_left_to_reach_target_temperature": {
+                "name": "O tempo da corrente alternada para alcançar a temperatura"
+            },
             "inspection": {
                 "name": "Próxima inspeção"
             },
             "inspection_in_km": {
-                "name": "Próxima inspeção em KM"
+                "name": "Próxima inspeção"
             },
             "mileage": {
                 "name": "Quilometragem"
@@ -240,7 +247,7 @@
                 "name": "Serviço de petróleo"
             },
             "oil_service_in_km": {
-                "name": "Serviço de petróleo em KM"
+                "name": "Serviço de petróleo"
             },
             "range": {
                 "name": "Alcance"
@@ -347,9 +354,6 @@
             },
             "flash": {
                 "name": "Piscar"
-            },
-            "generate_fixtures": {
-                "name": "Gerar instalações"
             }
         }
     },

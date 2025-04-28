@@ -2,30 +2,31 @@
     "config": {
         "abort": {
             "already_configured": "Device is already configured",
-	    "reauth_successful": "Reauthentication has succeeded.",
-	    "no_entry": "Could not find MySkoda configuration. Please check your logs and open an issue on GitHub."
+            "reauth_successful": "Reauthentication has succeeded.",
+            "no_entry": "Could not find MySkoda configuration. Please check your logs and open an issue on GitHub."
         },
         "error": {
             "cannot_connect": "Failed to connect. MySkoda may be down or unreachable.",
             "invalid_auth": "Invalid authentication. Please check your credentials.",
-            "relogin_in_app": "An error has been detected during login. It may be necessary to re-login in your MySkoda app.",
-            "unknown": "An unexpected error occurred. Please check the HomeAssistant logfiles and report an issue to the developers."
+            "relogin_in_app": "Terms or marketing consent missing. Log out and back in with official MySkoda app, or https://skodaid.vwgroup.io, to accept the new conditions.",
+            "unknown": "An unexpected error occurred. Please check the HomeAssistant logfiles and report an issue to the developers.",
+            "no_spin": "The S-PIN is missing from configuration. Please reconfigure the integration and try again."
         },
         "step": {
-	    "reauth_confirm": {
-		"data": {
-		    "email": "E-mail address",
-		    "password": "Password"
-		},
-		"description": "Authentication to MySkoda has failed. Please re-enter the credentials from your MySkoda app.",
-		"title": "Re-authenticate MySkoda"
-	    },
+            "reauth_confirm": {
+                "data": {
+                    "email": "E-mail address",
+                    "password": "Password"
+                },
+                "description": "Authentication to MySkoda has failed. Please re-enter the credentials from your MySkoda app.",
+                "title": "Re-authenticate MySkoda"
+            },
             "user": {
                 "data": {
                     "email": "E-mail",
                     "password": "Password"
                 },
-	        "description": "Enter the credentials from your MySkoda app."
+                "description": "Enter the credentials from your MySkoda app."
             }
         }
     },
@@ -198,6 +199,9 @@
             }
         },
         "sensor": {
+            "aux_estimated_time_left_to_reach_target_temperature": {
+                "name": "Heater Time to reach target temperature"
+            },
             "battery_percentage": {
                 "name": "Battery Percentage"
             },
@@ -227,11 +231,14 @@
                     "ready_for_charging": "Ready for Charging"
                 }
             },
+            "estimated_time_left_to_reach_target_temperature": {
+                "name": "AC Time to reach target temperature"
+            },
             "inspection": {
                 "name": "Next Inspection"
             },
             "inspection_in_km": {
-                "name": "Next Inspection in KM"
+                "name": "Next Inspection"
             },
             "mileage": {
                 "name": "Mileage"
@@ -240,7 +247,7 @@
                 "name": "Oil Service"
             },
             "oil_service_in_km": {
-                "name": "Oil Service in KM"
+                "name": "Oil Service"
             },
             "range": {
                 "name": "Range"
@@ -347,9 +354,6 @@
             },
             "flash": {
                 "name": "Flash"
-            },
-            "generate_fixtures": {
-                "name": "Generate Fixtures"
             }
         }
     },

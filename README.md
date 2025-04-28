@@ -38,6 +38,7 @@ If your desired language is not available, please [open an issue](https://github
 - Fuel Level
 - Combustion range
 - Electric range
+- Estimated Time To Reach Target Temperature
 
 #### Last Updated sensor
 
@@ -84,7 +85,6 @@ This is different from [Last Service Event](#last-service-event).
 ### Buttons
 - Honk and Flash
 - Flash
-- Generate Fixtures (deprecated, use Device Diagnostics instead)
 
 ### Climate
 
@@ -185,6 +185,7 @@ In order for the integration to discover this new vehicle, you will need to relo
 
 ## Installation
 You can manually install this integration as an custom_component under Home Assistant or install it using HACS (Home Assistant Community Store).
+As always with a custom integration, you will need to restart your HomeAssistant before you can use it.
 
 ### Manual installation
 1. **Download** the `myskoda` repository or folder.
@@ -255,6 +256,16 @@ Pick any of the subjects from the example. If you want to enable full debugging,
 
 - **custom_components.myskoda.XYZ** Sets debug level for individual entity types in the custom component.
 
+## Enable tracing
+
+Enabling tracing makes the integration log the complete interactions between the MySkoda servers and HomeAssistant. This will contain personal sensitive information.
+You can enable tracing by going to Integrations > MySkoda > Hubs > Select your account > Configure
+
+Choose "API response tracing"
+
+Alternately, click the button below, select your account, click Configure
+[![Button](https://my.home-assistant.io/badges/integration.svg)](https://my.home-assistant.io/redirect/integration/?domain=myskoda)
+
 ## Customize polling interval
 
 This integration does not poll at a set interval, instead when the last update has been a while, we request new information from MySkoda.
@@ -265,14 +276,30 @@ When the car is quiet for a period we call the **POLLING INTERVAL**, we will req
 By default, this POLLING INTERVAL is set to 30 minutes. You can tune this to anything between 1 and 1440 minutes (1 day) by filling in the desired value in
 Integrations > MySkoda > Hubs > Select your account > Configure
 
+Alternately, click the button below, select your account, click Configure
+[![Button](https://my.home-assistant.io/badges/integration.svg)](https://my.home-assistant.io/redirect/integration/?domain=myskoda)
+
 ## Disabling polling
 
-You can disable polling completely and use automations to update the data from MySkoda. In order to do this, disable polling in the integration, and call the following action:
+You can disable polling completely and use automations to update the data from MySkoda. This is done in two steps:
+
+1. Disable polling in the integration:
+- Open the integration settings in your HomeAssistant. If you have HomeAssistant Cloud, click the button. 
+[![Button](https://my.home-assistant.io/badges/integration.svg)](https://my.home-assistant.io/redirect/integration/?domain=myskoda)
+- Select the three dots behind the desired account to edit.
+- Select System Settings
+- Disable Polling (the second option)
+- Click save
+
+2. Call the following action in an automation, updating the `entity_id` to suit your vehicle(s):
 
 ```yaml
 action: homeassistant.update_entity
 target:
-  entity_id: device_tracker.skoda_4ever
+  entity_id: device_tracker.skoda_enyaq_position
+data:
+  entity_id:
+    - device_tracker.skoda_enyaq_position
 ```
 
 ## S-PIN
@@ -283,21 +310,13 @@ Fill in the required S-PIN in Settings > Integrations > MySkoda > Configuration 
 ## Read-only mode
 
 The opposite to S-PIN is read-only mode. In this mode, all buttons, switches and other functionality that allows you to change settings remotely are disabled.
-In order not to accidentally delete data, we do not delete the entities
+In order not to accidentally delete data, we do not delete the entities.
 
 Also, if you disable read-only mode, the buttons, switches, etc will become available again.
 
-## Fixture generation
-
-The Generate Fixtures button allows users to generate car-related fixtures directly from the Home Assistant UI without requiring the use of myskoda[cli].
-
-When pressed, the button triggers the fixture generation process, and the generated fixtures are logged at the Info level in the Home Assistant Core log. Upon successful completion, a notification is displayed in the UI to inform the user that the fixtures have been successfully generated.
-
-This feature simplifies the process of creating fixtures by providing a user-friendly interface for initiating the operation.
-
 ## Diagnostics
 
-In addition to **Generate Fixtures feature** which generates the vehicle fixtures into Home Assitant Core log, the **Diagnostics** feature allows you to directly download diagnostic data for sharing in issue reports. Providing diagnostics data when reporting an issue helps developers diagnose and resolve your problem more efficiently.
+The **Diagnostics** feature allows you to directly download diagnostic data for sharing in issue reports. Providing diagnostics data when reporting an issue helps developers diagnose and resolve your problem more efficiently.
 
 You can download the diagnostics data as a text file from the device page or the integrations dashboard.
 
@@ -309,6 +328,33 @@ Diagnostics file include:
 - Anonymized vehicle fixtures from the MySkoda API. (fixtures can be found under the `data` key in the diagnostics response)
 
 > **Note:** Vehicle fixtures are responses from all available MySkoda API endpoints always returned in both raw and serialized format.
+
+## Inner workings
+
+This integration uses a combination of push and pull techniques, and it does so in the following manner:
+
+1. Upon launch, we contact MySkoda servers to collect data about your car. This allows us to determine which entities we need to create.  
+   This means we never contact your car directly. Skoda has no way for users to connect to the car via the OTA/GSM/LTE connection (that we know of).
+   
+2. When we know about your car, we connect to the MySkoda servers and tell them we want to receive events for your car via MQTT.
+   
+3. Once we are fully initialised, we start a regular poll. This is behaviour that's common to most HomeAssistant integrations.  
+   MySkoda servers are polled on a default interval of 30 minutes. This may seem slow, but before you adjust it, read the next point please.
+   
+4. By listening to the events that come from your car, we have a steady stream of updates while your car is operating.  
+   Example events are: Unlock/Lock/Odometer update/SoC update/GPS update.  
+   When we receive an event, we process the data that's in the event directly and contact MySkoda servers to refresh the data relevant to the event.  
+   For instance: When we receive an Odometer update event, we ask MySkoda what the odometer is now and then update that sensor.  
+   Or: Sometimes we receive an error event from the car. At that point, we request a full update so you get the most recent state as soon as the error occurred.
+   
+5. Sometimes, we receive more than one sensor update. We then update all relevant sensors.
+   
+6. The now scheduled update gets delayed by the default interval of 30 minutes.
+   
+7. When 30 minutes have passed and we have not received any event, we request a full update from the MySkoda servers. All entities are refreshed.
+   
+8. We keep on listening for events and return to step 4 in this list.
+
 
 ## Disclaimer
 

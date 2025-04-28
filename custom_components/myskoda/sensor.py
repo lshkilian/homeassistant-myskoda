@@ -1,6 +1,6 @@
 """Sensors for the MySkoda integration."""
 
-from datetime import datetime
+from datetime import datetime, UTC
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -8,7 +8,6 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     PERCENTAGE,
     EntityCategory,
@@ -32,13 +31,14 @@ from myskoda.models.info import CapabilityId
 from myskoda.models.operation_request import OperationStatus
 
 from .const import COORDINATORS, DOMAIN, OUTSIDE_TEMP_MIN_BOUND, OUTSIDE_TEMP_MAX_BOUND
+from .coordinator import MySkodaConfigEntry
 from .entity import MySkodaEntity
 from .utils import add_supported_entities
 
 
 async def async_setup_entry(
         hass: HomeAssistant,
-        config: ConfigEntry,
+    config: MySkodaConfigEntry,
         async_add_entities: AddEntitiesCallback,
         _discovery_info: DiscoveryInfoType | None = None,
 ) -> None:
@@ -74,6 +74,8 @@ async def async_setup_entry(
             ServiceEvent,
             SoftwareVersion,
             TargetBatteryPercentage,
+            ClimatisationTimeLeft,
+            AuxHeaterTimeLeft,
         ],
         coordinators=hass.data[DOMAIN][config.entry_id][COORDINATORS],
         async_add_entities=async_add_entities,
@@ -670,14 +672,12 @@ class Mileage(MySkodaSensor):
 
     @property
     def native_value(self) -> int | None:  # noqa: D102
-        if health := self.vehicle.health:
-            return health.mileage_in_km
-        # If we have disabled the health endpoint, use this as fallback
-        elif maint_report := self.vehicle.maintenance.maintenance_report:
+        if maint_report := self.vehicle.maintenance.maintenance_report:
             return maint_report.mileage_in_km
+        # If the maint report does not have mileage, use vehicle health as fallback
+        elif health := self.vehicle.health:
+            return health.mileage_in_km
 
-    def required_capabilities(self) -> list[CapabilityId]:
-        return [CapabilityId.VEHICLE_HEALTH_WARNINGS]
 
 class InspectionInterval(MySkodaSensor):
     """The number of days before next inspection."""
@@ -695,9 +695,6 @@ class InspectionInterval(MySkodaSensor):
         if maintenance_report := self.vehicle.maintenance.maintenance_report:
             return maintenance_report.inspection_due_in_days
 
-    def required_capabilities(self) -> list[CapabilityId]:
-        return [CapabilityId.VEHICLE_HEALTH_INSPECTION]
-
 
 class InspectionIntervalKM(MySkodaSensor):
     """The number of kilometers before inspection is due."""
@@ -714,9 +711,6 @@ class InspectionIntervalKM(MySkodaSensor):
     def native_value(self) -> int | None:  # noqa: S102
         if maintenance_report := self.vehicle.maintenance.maintenance_report:
             return maintenance_report.inspection_due_in_km
-
-    def required_capabilities(self) -> list[CapabilityId]:
-        return [CapabilityId.VEHICLE_HEALTH_INSPECTION, CapabilityId.FUEL_STATUS]
 
 
 class OilServiceIntervalDays(MySkodaSensor):
@@ -736,7 +730,7 @@ class OilServiceIntervalDays(MySkodaSensor):
             return maintenance_report.oil_service_due_in_days
 
     def required_capabilities(self) -> list[CapabilityId]:
-        return [CapabilityId.VEHICLE_HEALTH_INSPECTION, CapabilityId.FUEL_STATUS]
+        return [CapabilityId.FUEL_STATUS]
 
 
 class OilServiceIntervalKM(MySkodaSensor):
@@ -756,7 +750,7 @@ class OilServiceIntervalKM(MySkodaSensor):
             return maintenance_report.oil_service_due_in_km
 
     def required_capabilities(self) -> list[CapabilityId]:
-        return [CapabilityId.VEHICLE_HEALTH_INSPECTION, CapabilityId.FUEL_STATUS]
+        return [CapabilityId.FUEL_STATUS]
 
 
 class ChargeType(ChargingSensor):
@@ -811,7 +805,8 @@ class RemainingChargingTime(ChargingSensor):
     @property
     def native_value(self) -> int | None:  # noqa: D102
         if status := self._status():
-            return status.remaining_time_to_fully_charged_in_minutes
+            if status.state != charging.ChargingState.CONNECT_CABLE:
+                return status.remaining_time_to_fully_charged_in_minutes
 
 
 class ChargingRate(ChargingSensor):
@@ -872,3 +867,56 @@ class OutsideTemperature(MySkodaSensor):
 
     def required_capabilities(self) -> list[CapabilityId]:
         return [CapabilityId.OUTSIDE_TEMPERATURE]
+
+
+class ClimatisationTimeLeft(MySkodaSensor):
+    """Estimated time left until climatisation via AC has reached its goal."""
+
+    entity_description = SensorEntityDescription(
+        key="estimated_time_left_to_reach_target_temperature",
+        device_class=SensorDeviceClass.DURATION,
+        native_unit_of_measurement=UnitOfTime.SECONDS,
+        suggested_unit_of_measurement=UnitOfTime.MINUTES,
+        translation_key="estimated_time_left_to_reach_target_temperature",
+    )
+
+    @property
+    def native_value(self) -> int | None:  # noqa: D102
+        if _ac := self.vehicle.air_conditioning:
+            if _ac.estimated_date_time_to_reach_target_temperature:
+                target_datetime = _ac.estimated_date_time_to_reach_target_temperature
+                now = datetime.now(UTC)
+
+                duration = target_datetime - now
+
+                # If we reached it already, return 0
+                return max(0, int(duration.total_seconds()))
+
+    def required_capabilities(self) -> list[CapabilityId]:
+        return [CapabilityId.AIR_CONDITIONING]
+
+
+class AuxHeaterTimeLeft(MySkodaSensor):
+    """Estimated time left until climatisation via aux heater has reached its goal."""
+
+    entity_description = SensorEntityDescription(
+        key="aux_estimated_time_left_to_reach_target_temperature",
+        device_class=SensorDeviceClass.DURATION,
+        native_unit_of_measurement=UnitOfTime.SECONDS,
+        suggested_unit_of_measurement=UnitOfTime.MINUTES,
+        translation_key="aux_estimated_time_left_to_reach_target_temperature",
+    )
+
+    @property
+    def native_value(self) -> int | None:  # noqa: D102
+        if _aux := self.vehicle.auxiliary_heating:
+            if target_datetime := _aux.estimated_date_time_to_reach_target_temperature:
+                now = datetime.now(UTC)
+
+                duration = target_datetime - now
+
+                # If we reached it already, return 0
+                return max(0, int(duration.total_seconds()))
+
+    def required_capabilities(self) -> list[CapabilityId]:
+        return [CapabilityId.AUXILIARY_HEATING]

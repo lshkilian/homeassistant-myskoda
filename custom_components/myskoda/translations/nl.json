@@ -9,7 +9,8 @@
             "cannot_connect": "Kan geen verbinding maken",
             "invalid_auth": "Ongeldige authenticatie",
             "relogin_in_app": "Er is een fout opgetreden tijdens het inloggen door HomeAssistant. Het kan nodig zijn om opnieuw in te loggen in uw MySkoda app.",
-            "unknown": "Er is een onverwachte fout opgetreden. Controleer de HomeAssistant logbestanden."
+            "unknown": "Er is een onverwachte fout opgetreden. Controleer de HomeAssistant logbestanden.",
+            "no_spin": "De S-PIN ontbreekt. Herconfigureer de integratie en probeer het opnieuw."
         },
         "step": {
             "reauth_confirm": {
@@ -198,6 +199,9 @@
             }
         },
         "sensor": {
+            "aux_estimated_time_left_to_reach_target_temperature": {
+                "name": "Tijd om de gewenste temperatuur te bereiken"
+            },
             "battery_percentage": {
                 "name": "Accupercentage"
             },
@@ -227,11 +231,14 @@
                     "ready_for_charging": "Klaar om op te laden"
                 }
             },
+            "estimated_time_left_to_reach_target_temperature": {
+                "name": "Tijd om de gewenste temperatuur te bereiken"
+            },
             "inspection": {
                 "name": "Volgend onderhoud"
             },
             "inspection_in_km": {
-                "name": "Volgend onderhoud (km)"
+                "name": "Volgend onderhoud"
             },
             "mileage": {
                 "name": "Kilometerstand"
@@ -240,7 +247,7 @@
                 "name": "Olie onderhoud"
             },
             "oil_service_in_km": {
-                "name": "Olie onderhoud (km)"
+                "name": "Olie onderhoud"
             },
             "range": {
                 "name": "Actieradius"
@@ -347,9 +354,6 @@
             },
             "flash": {
                 "name": "Knipper alarm lichten"
-            },
-            "generate_fixtures": {
-                "name": "Genereer specificaties"
             }
         }
     },

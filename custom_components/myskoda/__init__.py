@@ -6,10 +6,10 @@ import logging
 
 from aiohttp import ClientResponseError, InvalidUrlClientError
 
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
 from homeassistant.util.ssl import get_default_context
 from myskoda import (
@@ -24,8 +24,8 @@ from myskoda.auth.authorization import (
 )
 
 
-from .const import COORDINATORS, DOMAIN, VINLIST
-from .coordinator import MySkodaDataUpdateCoordinator
+from .const import CONF_USERNAME, CONF_PASSWORD, COORDINATORS, DOMAIN, VINLIST
+from .coordinator import MySkodaConfigEntry, MySkodaDataUpdateCoordinator
 from .error_handlers import handle_aiohttp_error
 from .issues import (
     async_create_tnc_issue,
@@ -49,7 +49,7 @@ PLATFORMS: list[Platform] = [
 
 
 def myskoda_instantiate(
-    hass: HomeAssistant, entry: ConfigEntry, mqtt_enabled: bool = True
+    hass: HomeAssistant, entry: MySkodaConfigEntry, mqtt_enabled: bool = True
 ) -> MySkoda:
     """Generic connector to MySkoda REST API."""
 
@@ -63,19 +63,21 @@ def myskoda_instantiate(
     return MySkoda(session, get_default_context(), mqtt_enabled=mqtt_enabled)
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+async def async_setup_entry(hass: HomeAssistant, entry: MySkodaConfigEntry) -> bool:
     """Set up MySkoda integration from a config entry."""
 
     myskoda = myskoda_instantiate(hass, entry, mqtt_enabled=False)
 
     try:
-        await myskoda.connect(entry.data["email"], entry.data["password"])
+        await myskoda.connect(entry.data[CONF_USERNAME], entry.data[CONF_PASSWORD])
     except AuthorizationFailedError as exc:
         _LOGGER.debug("Authorization with MySkoda failed.")
         raise ConfigEntryAuthFailed from exc
     except (TermsAndConditionsError, MarketingConsentError) as exc:
         _LOGGER.error(
-            "Change to terms and conditions or consents detected while logging in. Please log into the MySkoda app (may require a logout first) to access the new Terms and Conditions. This HomeAssistant integration currently can not continue."
+            "Terms or marketing consent missing. Log out and back in with official MySkoda app, "
+            "or https://skodaid.vwgroup.io, to accept the new conditions. Error: %s",
+            exc,
         )
         async_create_tnc_issue(hass, entry.entry_id)
         raise ConfigEntryNotReady from exc
@@ -125,8 +127,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return True
 
 
-async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+async def async_unload_entry(hass: HomeAssistant, entry: MySkodaConfigEntry) -> bool:
     """Unload a config entry."""
+    coordinators: dict[str, MySkodaDataUpdateCoordinator] = hass.data[DOMAIN][
+        entry.entry_id
+    ].get(COORDINATORS, {})
+    for coord in coordinators.values():
+        await coord.myskoda.disconnect()
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unload_ok:
         hass.data[DOMAIN].pop(entry.entry_id)
@@ -134,13 +141,13 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return unload_ok
 
 
-async def _async_update_listener(hass: HomeAssistant, entry: ConfigEntry):
+async def _async_update_listener(hass: HomeAssistant, entry: MySkodaConfigEntry):
     """Handle options update."""
     # Do a lazy reload of integration when configuration changed
     await hass.config_entries.async_reload(entry.entry_id)
 
 
-async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+async def async_migrate_entry(hass: HomeAssistant, entry: MySkodaConfigEntry) -> bool:
     """Handle MySkoda config-entry schema migrations."""
 
     _LOGGER.debug(
@@ -216,6 +223,38 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             vinlist = await myskoda.list_vehicle_vins()
             entry_data[VINLIST] = vinlist
             _LOGGER.debug("Add vinlist %s to entry %s", vinlist, entry.entry_id)
+
+            hass.config_entries.async_update_entry(
+                entry,
+                version=new_version,
+                minor_version=new_minor_version,
+                data=entry_data,
+            )
+
+            return True
+        if entry.minor_version < 3:
+            # Remove unneeded generate_fixtures button
+            _LOGGER.info(
+                "Starting migration to config schema 2.3, removing deprecated fixtures button"
+            )
+
+            new_version = 2
+            new_minor_version = 3
+
+            entry_data = {**entry.data}
+            vinlist = entry_data[VINLIST]
+
+            hass_er = er.async_get(hass)
+            entry_entities = er.async_entries_for_config_entry(hass_er, entry.entry_id)
+            vin_set = {f"{vin}_generate_fixtures" for vin in vinlist}
+
+            for entity in entry_entities:
+                if entity.unique_id in vin_set:
+                    _LOGGER.debug(
+                        "Removing entity %s, it is no longer supported",
+                        entity.unique_id,
+                    )
+                    hass_er.async_remove(entity.entity_id)
 
             hass.config_entries.async_update_entry(
                 entry,

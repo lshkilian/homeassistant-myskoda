@@ -103,6 +103,9 @@
             }
         },
         "sensor": {
+            "aux_estimated_time_left_to_reach_target_temperature": {
+                "default": "mdi:timelapse"
+            },
             "car_captured": {
                 "default": "mdi:clock"
             },
@@ -124,11 +127,14 @@
                     "dc": "mdi:ev-plug-ccs2"
                 }
             },
+            "estimated_time_left_to_reach_target_temperature": {
+                "default": "mdi:timelapse"
+            },
             "inspection": {
                 "default": "mdi:car-wrench"
             },
             "inspection_in_km": {
-                "default": "mdi:car-wrench"
+                "default": "mdi:counter"
             },
             "mileage": {
                 "default": "mdi:counter"
@@ -137,7 +143,7 @@
                 "default": "mdi:oil"
             },
             "oil_service_in_km": {
-                "default": "mdi:oil"
+                "default": "mdi:counter"
             },
             "adblue_range": {
                 "default": "mdi:gauge"
@@ -286,9 +292,6 @@
             },
             "flash": {
                 "default": "mdi:car-parking-lights"
-            },
-            "generate_fixtures": {
-                "default": "mdi:information"
             }
         }
     }
