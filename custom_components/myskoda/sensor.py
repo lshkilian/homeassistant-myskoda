@@ -26,7 +26,7 @@ from homeassistant.helpers.typing import (
 from myskoda.models import charging
 from myskoda.models.charging import Charging, ChargingStatus
 from myskoda.models.driving_range import EngineType
-from myskoda.models.health import WarningLightCategory
+from myskoda.models.health import (WarningLightCategory, DefectDetails)
 from myskoda.models.info import CapabilityId
 from myskoda.models.operation_request import OperationStatus
 
@@ -533,11 +533,11 @@ class WarningLightAssistance(MySkodaSensor):
         icon="mdi:alert-circle-outline",
     )
     @property
-    def native_value(self)-> str | None:  #
+    def native_value(self)-> DefectDetails | None:  #
         if health := self.vehicle.health:
             for light in health.warning_lights:
                 if light.category == self.category:
-                    return ",".join(light.defects)
+                    return ",".join(defect.text for defect in light.defects)
         return ""
 
     def required_capabilities(self) -> list[CapabilityId]:
@@ -551,11 +551,11 @@ class WarningLightComfort(MySkodaSensor):
         icon="mdi:alert-circle-outline",
     )
     @property
-    def native_value(self)-> str | None:  #
+    def native_value(self)-> DefectDetails | None:  #
         if health := self.vehicle.health:
             for light in health.warning_lights:
                 if light.category == self.category:
-                    return ",".join(light.defects)
+                    return ",".join(defect.text for defect in light.defects)
         return ""
 
     def required_capabilities(self) -> list[CapabilityId]:
@@ -570,11 +570,11 @@ class WarningLightBrake(MySkodaSensor):
         icon="mdi:alert-circle-outline",
     )
     @property
-    def native_value(self)-> str | None:  #
+    def native_value(self)-> DefectDetails | None:  #
         if health := self.vehicle.health:
             for light in health.warning_lights:
                 if light.category == self.category:
-                    return ",".join(light.defects)
+                    return ",".join(defect.text for defect in light.defects)
         return ""
 
     def required_capabilities(self) -> list[CapabilityId]:
@@ -589,11 +589,11 @@ class WarningLightEngine(MySkodaSensor):
         icon="mdi:alert-circle-outline",
     )
     @property
-    def native_value(self)-> str | None:  #
+    def native_value(self)-> DefectDetails | None:  #
         if health := self.vehicle.health:
             for light in health.warning_lights:
                 if light.category == self.category:
-                    return ",".join(light.defects)
+                    return ",".join(defect.text for defect in light.defects)
         return ""
 
     def required_capabilities(self) -> list[CapabilityId]:
@@ -608,11 +608,11 @@ class WarningLightLighting(MySkodaSensor):
         icon="mdi:alert-circle-outline",
     )
     @property
-    def native_value(self)-> str | None:  #
+    def native_value(self)-> DefectDetails | None:  #
         if health := self.vehicle.health:
             for light in health.warning_lights:
                 if light.category == self.category:
-                    return ",".join(light.defects)
+                    return ",".join(defect.text for defect in light.defects)
         return ""
 
     def required_capabilities(self) -> list[CapabilityId]:
@@ -627,11 +627,11 @@ class WarningLightTire(MySkodaSensor):
         icon="mdi:alert-circle-outline",
     )
     @property
-    def native_value(self)-> str | None:  #
+    def native_value(self)-> DefectDetails | None:  #
         if health := self.vehicle.health:
             for light in health.warning_lights:
                 if light.category == self.category:
-                    return ",".join(light.defects)
+                    return ",".join(defect.text for defect in light.defects)
         return ""
 
     def required_capabilities(self) -> list[CapabilityId]:
@@ -646,11 +646,11 @@ class WarningLightOther(MySkodaSensor):
         icon="mdi:alert-circle-outline",
     )
     @property
-    def native_value(self)-> str | None:  #
+    def native_value(self)-> DefectDetails | None:  #
         if health := self.vehicle.health:
             for light in health.warning_lights:
                 if light.category == self.category:
-                    return ",".join(light.defects)
+                    return ",".join(defect.text for defect in light.defects)
         return ""
 
     def required_capabilities(self) -> list[CapabilityId]:
