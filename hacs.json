@@ -2,7 +2,5 @@
     "name": "MySkoda",
     "render_readme": true,
     "hide_default_branch": true,
-    "homeassistant": "2025.3.2",
-    "zip_release": true,
-    "filename": "homeassistant-myskoda.zip"
+    "homeassistant": "2025.3.2"
 }
