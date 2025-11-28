@@ -1,6 +1,7 @@
 """Sensors for the MySkoda integration."""
 
-from datetime import datetime, UTC
+from datetime import UTC, datetime
+from math import isnan
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -27,10 +28,10 @@ from myskoda.models import charging
 from myskoda.models.charging import Charging, ChargingStatus
 from myskoda.models.driving_range import EngineType
 from myskoda.models.health import (WarningLightCategory, DefectDetails)
+from myskoda.models.event import OperationStatus
 from myskoda.models.info import CapabilityId
-from myskoda.models.operation_request import OperationStatus
 
-from .const import COORDINATORS, DOMAIN, OUTSIDE_TEMP_MIN_BOUND, OUTSIDE_TEMP_MAX_BOUND
+from .const import COORDINATORS, DOMAIN, OUTSIDE_TEMP_MAX_BOUND, OUTSIDE_TEMP_MIN_BOUND
 from .coordinator import MySkodaConfigEntry
 from .entity import MySkodaEntity
 from .utils import add_supported_entities
@@ -54,6 +55,7 @@ async def async_setup_entry(
             CombustionRange,
             ElectricRange,
             FuelLevel,
+            GasRange,
             InspectionInterval,
             InspectionIntervalKM,
             LastUpdated,
@@ -110,7 +112,7 @@ class Operation(MySkodaSensor):
         """Returns the status of the last seen operation."""
         if self.operations:
             last_operation = list(self.operations.values())[-1]
-            return last_operation.operation.status.lower()
+            return last_operation.status.lower()
 
     @property
     def extra_state_attributes(self) -> dict:
@@ -127,10 +129,10 @@ class Operation(MySkodaSensor):
         operations.reverse()
         filtered = [
             {
-                "request_id": event.operation.request_id,
-                "operation": event.operation.operation,
-                "status": event.operation.status.lower(),
-                "error_code": event.operation.error_code,
+                "request_id": event.request_id,
+                "operation": event.operation,
+                "status": event.status.lower(),
+                "error_code": event.error_code,
                 "timestamp": event.timestamp,
             }
             for event in operations
@@ -222,8 +224,8 @@ class BatteryPercentage(ChargingSensor):
     @property
     def native_value(self) -> int | None:  # noqa: D102
         if status := self._status():
-            if status.battery.state_of_charge_in_percent:
-                return status.battery.state_of_charge_in_percent
+            if status.battery.state_of_charge_in_percent is not None:
+                return min(status.battery.state_of_charge_in_percent, 100)
 
     @property
     def icon(self) -> str:  # noqa: D102
@@ -674,6 +676,9 @@ class Mileage(MySkodaSensor):
         The API sometimes erroneously returns an old, lower value. Mileage should never go down.
         To work around this we inspect the last state, if there is one, and return that if it is
         larger than the value from the API.
+
+        The API also sometimes erroneously returns the value 429_496_729. Values over 400_000_000
+        are ignored and the last value is returned instead, if there is one.
         """
         last_value = 0
         last_state = self.hass.states.get(self.entity_id)
@@ -683,15 +688,27 @@ class Mileage(MySkodaSensor):
             except (ValueError, TypeError):
                 pass  # value may initially be 'unavailable' or 'None'
 
+        def _valid_km(value):
+            return isinstance(value, int) and not isnan(value)
+
         mileage_in_km = None
-        if maint_report := self.vehicle.maintenance.maintenance_report:
-            mileage_in_km = maint_report.mileage_in_km
+        if (maintenance := self.vehicle.maintenance) and (
+            report := maintenance.maintenance_report
+        ):
+            if _valid_km(report.mileage_in_km):
+                mileage_in_km = report.mileage_in_km
+
         # If the maint report does not have mileage, use vehicle health as fallback
-        elif health := self.vehicle.health:
+        if (
+            mileage_in_km is None
+            and (health := self.vehicle.health)
+            and _valid_km(health.mileage_in_km)
+        ):
             mileage_in_km = health.mileage_in_km
 
-        if mileage_in_km:
+        if mileage_in_km and mileage_in_km < 400_000_000:
             return max(mileage_in_km, last_value)
+        return last_value if last_value else None
 
 
 class InspectionInterval(MySkodaSensor):

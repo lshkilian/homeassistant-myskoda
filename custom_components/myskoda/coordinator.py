@@ -13,17 +13,13 @@ from aiohttp.client_exceptions import ClientResponseError
 from homeassistant.config_entries import ConfigEntry, ConfigEntryState
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.debounce import Debouncer
+from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.start import async_at_started
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from myskoda import MySkoda, Vehicle
-from myskoda.event import (
-    Event,
-    EventOperation,
-    ServiceEvent,
-)
+from myskoda.models.event import BaseEvent, OperationEvent, ServiceEvent
 from myskoda.models.user import User
-from myskoda.mqtt import EventType
 
 from .const import (
     API_COOLDOWN_IN_SECONDS,
@@ -33,6 +29,7 @@ from .const import (
     DOMAIN,
     MAX_STORED_OPERATIONS,
     MAX_STORED_SERVICE_EVENTS,
+    MQTT_RECONNECT_INTERVAL_IN_SECONDS,
 )
 from .error_handlers import handle_aiohttp_error
 
@@ -62,7 +59,7 @@ class MySkodaDebouncer(Debouncer):
 
 
 # History of EventType.OPERATION events, keyed by request_id
-Operations = OrderedDict[str, EventOperation]
+Operations = OrderedDict[str, OperationEvent]
 
 
 # History of EventType.SERVICE_EVENT events
@@ -119,6 +116,7 @@ class MySkodaDataUpdateCoordinator(DataUpdateCoordinator[State]):
         self.service_events: deque = deque(maxlen=MAX_STORED_SERVICE_EVENTS)
         self.entry: MySkodaConfigEntry = entry
         self._mqtt_connecting: bool = False
+        self._mqtt_retry_scheduled: bool = False
         self._startup_called: bool = False
 
     async def _async_update_data(self) -> State:
@@ -145,6 +143,23 @@ class MySkodaDataUpdateCoordinator(DataUpdateCoordinator[State]):
                     "MySkoda has finished starting up. Scheduling post-start tasks for vin %s.",
                     self.vin,
                 )
+
+                async def _retry_mqtt(_now=None) -> None:
+                    """Retry loop for MQTT connection."""
+                    if not self.myskoda.mqtt and not self._mqtt_connecting:
+                        await self._mqtt_connect()
+                    if not self.myskoda.mqtt and not self._mqtt_retry_scheduled:
+                        _LOGGER.warning(
+                            "Could not connect to MQTT. Retry in %s seconds",
+                            MQTT_RECONNECT_INTERVAL_IN_SECONDS,
+                        )
+                        async_call_later(
+                            hass, MQTT_RECONNECT_INTERVAL_IN_SECONDS, _retry_mqtt
+                        )
+                        self._mqtt_retry_scheduled = True
+                        return
+                    self._mqtt_retry_scheduled = False
+
                 try:
                     coord = hass.data[DOMAIN][self.entry.entry_id][COORDINATORS][
                         self.vin
@@ -154,7 +169,15 @@ class MySkodaDataUpdateCoordinator(DataUpdateCoordinator[State]):
                             self.hass, coord._mqtt_connect(), "mqtt"
                         )
                 except KeyError:
-                    _LOGGER.debug("Could not connect to MQTT. Waiting for regular poll")
+                    if not self._mqtt_retry_scheduled:
+                        _LOGGER.warning(
+                            "Could not connect to MQTT. Retry in %s seconds",
+                            MQTT_RECONNECT_INTERVAL_IN_SECONDS,
+                        )
+                        async_call_later(
+                            hass, MQTT_RECONNECT_INTERVAL_IN_SECONDS, _retry_mqtt
+                        )
+                        self._mqtt_retry_scheduled = True
 
             async_at_started(
                 hass=self.hass, at_start_cb=_async_finish_startup
@@ -212,17 +235,17 @@ class MySkodaDataUpdateCoordinator(DataUpdateCoordinator[State]):
             pass
         self._mqtt_connecting = False
 
-    async def _on_mqtt_event(self, event: Event) -> None:
+    async def _on_mqtt_event(self, event: BaseEvent) -> None:
         if event.vin != self.vin:
             return
-        if event.type == EventType.OPERATION:
+        if isinstance(event, OperationEvent):
             # Store the last MAX_STORED_OPERATIONS operations
-            if request_id := event.operation.request_id:
+            if request_id := event.request_id:
                 self.operations[request_id] = event
                 while len(self.operations) > MAX_STORED_OPERATIONS:
                     self.operations.popitem(last=False)
-        if event.type == EventType.SERVICE_EVENT:
-            self.service_events.appendleft(event.event)
+        if isinstance(event, ServiceEvent):
+            self.service_events.appendleft(event)
         self.async_set_updated_data(self.data)
 
     def _unsub_refresh(self):

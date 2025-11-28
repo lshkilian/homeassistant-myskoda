@@ -14,7 +14,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: crowdin action
         uses: crowdin/github-action@v2
@@ -25,10 +25,12 @@ jobs:
           download_translations_args: --skip-untranslated-strings
           localization_branch_name: l10n_crowdin
           create_pull_request: true
-          pull_request_title: 'Update translations'
+          commit_message: |
+            chore(i10n): update translations
+          pull_request_title: 'chore(l10n): update translations from Crowdin'
           pull_request_body: 'New translations submitted'
           pull_request_base_branch_name: 'main'
-          pull_request_labels: translations
+          pull_request_labels: translations, chore
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
